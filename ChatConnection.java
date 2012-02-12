@@ -83,7 +83,6 @@ public class ChatConnection extends Thread {
                 ie.printStackTrace();
             }
 
-            
             if(received.length() > 1) {
                 // DEBUG echo received msg
                 System.out.println("received from " + cid + ": " + received);
@@ -93,9 +92,11 @@ public class ChatConnection extends Thread {
 
             // check for private message
             check_priv_messages();
-            
-            // check send all messages
-            check_all_messages();
+
+            if (loggedIn == true) {
+                // check send all messages
+                check_all_messages();
+            }
             
             // check if exiting has been set
             if(exiting == true) {
@@ -105,7 +106,13 @@ public class ChatConnection extends Thread {
                 } catch (Exception e) {
                 }
             }
-        } while (true && exiting == false);
+            
+            // sleep interval, do I need this??
+            try {
+                sleep(50);
+            } catch (InterruptedException ine) {
+            }
+        } while (exiting == false);
     }
    
 
@@ -129,46 +136,51 @@ public class ChatConnection extends Thread {
         }
 
         cmd = cmd.toUpperCase();
-        if (cmd.equals("WHO")) {
-            callWho();
-        } else if (cmd.equals("SENDALL")) {
-            sendMsg(inStr);
-        } else if (cmd.equals("SEND")) {
-            // break off name of receiver
-            space = inStr.indexOf(' ');
-            if(space > 0) {
-                receiver = inStr.substring(0,space);
-                inStr = inStr.substring(space+1);
-                md.privateMsg(inStr, name, receiver);
-            } else {
-                // if there is just one word, send as a send all message
-                sendMsg(inStr);
-            }
-        } else if (cmd.equals("LOGIN")) {
-            login(inStr);
-        } else if (cmd.equals("LOGOUT")) {
-            logout();
+
+        // Send a message to login, if not logged in
+        if (loggedIn == false && !cmd.equals("LOGIN")) {
+            privMessages.add("Please Login first.");
+            System.out.println("command is: " + cmd);
         } else {
-            System.out.println("don't recognize msgType: " + cmd + ", with string: " + inStr);
+            //System.out.println("logged in status: " + loggedIn);
+            if (cmd.equals("WHO")) {
+                callWho();
+            } else if (cmd.equals("SENDALL")) {
+                sendMsg(inStr);
+            } else if (cmd.equals("SEND")) {
+                // break off name of receiver
+                space = inStr.indexOf(' ');
+                if(space > 0) {
+                    receiver = inStr.substring(0,space);
+                    inStr = inStr.substring(space+1);
+                    md.privateMsg(inStr, name, receiver);
+                } else {
+                    // if there is just one word, send as a send all message
+                    sendMsg(inStr);
+                }
+            } else if (cmd.equals("LOGIN")) {
+                login(inStr);
+            } else if (cmd.equals("LOGOUT")) {
+                logout();
+            } else {
+                privMessages.add("could not understand command: " + cmd);
+                System.out.println("don't recognize msgType: " + cmd + ", with string: " + inStr);
+            }
         }
     }
 
     // client has asked to log out, 
     // disconnect connection and send a message to all.
     private void logout() {
-        try {
-            if(client != null) {
-                System.out.println("Closing down connection with " + cid);
-            }
+        if(client != null) {
+            System.out.println("Closing down connection with " + cid);
+        }
 
-            // start message to all with SENDALL msgtype
-            md.addMsg(name + " has left the chat room.");
+        // start message to all with SENDALL msgtype
+        md.addMsg(name + " has left the chat room.");
 
-            // remove this chatClient from MessageDaemon
-            md.removeChat(this);
-        } catch (IOException ie) {
-            System.out.println("Unable to disconnect");
-        } 
+        // remove this chatClient from MessageDaemon
+        md.removeChat(this);
         exiting = true;
     }
 

@@ -42,7 +42,13 @@ public class MessageDaemon extends Thread {
     }
 
     public void privateMsg (String msg, String from, String to) {
-        
+        String cname = "";
+        for(ChatConnection cc : chats) {
+            cname = cc.getClientName();
+            if(to.equals(cname)) {
+                cc.addPrivMsg(from + " (to " + to + "): " + msg);
+            } 
+        }
     }
     
     public void addMsg(String msg) {
