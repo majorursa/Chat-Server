@@ -2,7 +2,6 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-
 public class ChatConnection extends Thread {
     // type of message from client
     public enum MsgType {
@@ -15,15 +14,8 @@ public class ChatConnection extends Thread {
     // current msg client is on
     private int currentMsg;
 
-    // current private msg client has seen
-    // using queue instead
-    //private int currentPrivMsg;
-
     // Socket to client
     private Socket client;
-
-    // Input from client
-    //private BufferedReader input;
 
     // inputStream from socket is read into this byte array
     byte[] b;
@@ -36,7 +28,9 @@ public class ChatConnection extends Thread {
     // name of client
     private String name;
 
+    // Use InputStream for non-blocking IO call available
     private InputStream inputStream;
+
     // output writer to client
     private PrintWriter output;
     
@@ -45,18 +39,20 @@ public class ChatConnection extends Thread {
     
     // reference to MessageDaemon
     private MessageDaemon md;
+    
+    // reference to database connection
+    private DBConnection db;
 
     // grab input and output streams from Socket
-    public ChatConnection(Socket s, int id, MessageDaemon m) {
+    public ChatConnection(Socket s, int id, MessageDaemon m, DBConnection dbc) {
         privMessages = new LinkedList<String>();
         currentMsg = 0;
         exiting = false;
-        
+        db = dbc;
         client = s;
         md = m;
         try {
             inputStream = client.getInputStream();
-            //     instream = new ByteArrayInputStream(client.getInputStream());
             output = new PrintWriter(client.getOutputStream(), true);
             cid = id;
         } catch (IOException ie) {
@@ -91,11 +87,11 @@ public class ChatConnection extends Thread {
             }
 
             // check for private message
-            check_priv_messages();
+            checkPrivateMessages();
 
             if (loggedIn == true) {
                 // check send all messages
-                check_all_messages();
+                checkAllMessages();
             }
             
             // check if exiting has been set
@@ -117,11 +113,6 @@ public class ChatConnection extends Thread {
    
 
     public void processMsg(String inStr) {
-        // First char should be msg type.
-        //msgType = inStr.substring(0,1);
-        // chop off message type
-        //StringTokenizer st = new StringTokenizer(inStr);
-        //String cmd = st.nextToken();
         int space;
         String cmd;
         String receiver = "";
@@ -138,7 +129,7 @@ public class ChatConnection extends Thread {
         cmd = cmd.toUpperCase();
 
         // Send a message to login, if not logged in
-        if (loggedIn == false && !cmd.equals("LOGIN")) {
+        if (loggedIn == false && !cmd.equals("LOGIN") && !cmd.equals("REGISTER")) {
             privMessages.add("Please Login first.");
             System.out.println("command is: " + cmd);
         } else {
@@ -153,7 +144,11 @@ public class ChatConnection extends Thread {
                 if(space > 0) {
                     receiver = inStr.substring(0,space);
                     inStr = inStr.substring(space+1);
-                    md.privateMsg(inStr, name, receiver);
+                    if(receiver.equals("all")) {
+                        sendMsg(inStr);
+                    } else {
+                        md.privateMsg(inStr, name, receiver);
+                    }
                 } else {
                     // if there is just one word, send as a send all message
                     sendMsg(inStr);
@@ -162,8 +157,19 @@ public class ChatConnection extends Thread {
                 login(inStr);
             } else if (cmd.equals("LOGOUT")) {
                 logout();
+            } else if (cmd.equals("REGISTER")) {
+                space = inStr.indexOf(' ');
+                if(space > 0) {
+                    String u = inStr.substring(0,space);
+                    String p = inStr.substring(space+1);
+                    register(u,p);
+                } else {
+                    privMessages.add("Usage: register username password");
+                }
             } else {
-                privMessages.add("could not understand command: " + cmd);
+                // Send a message to user, telling them command is unrecognized.
+                privMessages.add("Could not recognize command: " + cmd);
+                // LOG message
                 System.out.println("don't recognize msgType: " + cmd + ", with string: " + inStr);
             }
         }
@@ -190,11 +196,6 @@ public class ChatConnection extends Thread {
         md.addMsg(name + ": " + msg);
     }
 
-    // send a private Message to a user
-    // public void sendPrivate(String msg, String sender, String rec) {
-    //     md.sendPrivate(msg, sender, rec);
-    // }
-    
     // Add message to the Chat Connection's private message Queue.
     public void addPrivMsg(String inStr) {
         privMessages.add(inStr);
@@ -205,14 +206,15 @@ public class ChatConnection extends Thread {
         return name;
     }
    
-    public void check_priv_messages() {
+    public void checkPrivateMessages() {
         String msg;
-        if((msg = privMessages.poll())!= null) {
+        // while queue has more private message, write them to socket
+        while((msg = privMessages.poll())!= null) {
             output.println(msg);
         }
     }
 
-    public void check_all_messages() {
+    public void checkAllMessages() {
         // check if there is a new message
         if(md.getMessagesSize() > currentMsg ) {
             currentMsg++;
@@ -221,6 +223,9 @@ public class ChatConnection extends Thread {
         }
     }
 
+    public void register(String username, String password) {
+        db.registerUser(username,password);
+    }
     // who
     public void callWho() {
         String whoList = md.who();
@@ -235,7 +240,7 @@ public class ChatConnection extends Thread {
         // st.nextToken();
         String inName = st.nextToken();
         String inPassword = st.nextToken();
-        if(checkPassword(inName,inPassword)) {
+        if(db.checkPassword(inName,inPassword)) {
             name = inName;
             System.out.println(name + " has successfully logged in.");
             md.addMsg(name + " has logged in.");
@@ -251,49 +256,3 @@ public class ChatConnection extends Thread {
     }
 }
 
-/**
-private class ChatConnectionWriter extends Thread {
-    private PrintWriter output;
-
-    // reference to MessageDaemon
-    private MessageDaemon md;
-
-    // Queue of private messages
-    //private Queue<String> privMessages;
- 
-
-    public ChatConnectionWriter(PrintWriter outp, MessageDaemon msgD) {
-        privMessages = new LinkedList<String>();
-        md = msgD;
-        output = outp;
-    }
-
-    public void check_priv_messages() {
-        String msg;
-        if((msg = privMessages.poll())!= null) {
-            output.println(msg);
-        }
-    }
-
-    public void check_all_messages() {
-        // check if there is a new message
-        if(md.getMessagesSize() > currentMsg ) {
-            currentMsg++;
-            System.out.println("checking message #" + currentMsg);
-            output.println(md.getMessage(currentMsg));
-        }
-    }
-
-    
-    public void run() {
-        do {
-            // check for private message
-            check_priv_messages();
-            
-            // check send all messages
-            check_all_messages();
-           
-        } while(true)
-    }
-}
-*/
