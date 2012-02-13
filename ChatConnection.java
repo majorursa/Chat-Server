@@ -47,7 +47,8 @@ public class ChatConnection extends Thread {
     public ChatConnection(Socket s, int id, MessageDaemon m, DBConnection dbc) {
         privMessages = new LinkedList<String>();
         md = m;
-        // set the current message for this client at the current size of the messages 
+        // set the current message for this client to the current size of the messages 
+        //  so client only gets messages sent, since they logged in.
         currentMsg = md.getMessagesSize();
         exiting = false;
         db = dbc;
@@ -226,7 +227,13 @@ public class ChatConnection extends Thread {
     }
 
     public void register(String username, String password) {
-        db.registerUser(username,password);
+        if(db.registerUser(username,password) == true) {
+            privMessages.add(username + " was successfully registered.");
+            privMessages.add("Please log in.");
+        } else {
+            privMessages.add(username + " is already registered.");
+            privMessages.add("Please choose another name or log in with old account.");
+        }
     }
     // who
     public void callWho() {
