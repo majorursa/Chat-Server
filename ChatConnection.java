@@ -46,11 +46,13 @@ public class ChatConnection extends Thread {
     // grab input and output streams from Socket
     public ChatConnection(Socket s, int id, MessageDaemon m, DBConnection dbc) {
         privMessages = new LinkedList<String>();
-        currentMsg = 0;
+        md = m;
+        // set the current message for this client at the current size of the messages 
+        currentMsg = md.getMessagesSize();
         exiting = false;
         db = dbc;
         client = s;
-        md = m;
+        
         try {
             inputStream = client.getInputStream();
             output = new PrintWriter(client.getOutputStream(), true);
