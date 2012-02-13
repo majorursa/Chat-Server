@@ -1,0 +1,27 @@
+* DONE mysql jdbc connection
+** use java -cp .:<classpath> 
+*** compile ChatServer.java
+javac -cp .:./mysql-connector-java-5.1.9-bin.jar ChatServer.java
+*** run ChatServer
+java -cp .:./mysql-connector-java-5.1.9-bin.jar ChatServer
+
+* TODO Swing GUI 
+** JList:      Logged in Users
+** JTextField: Text entry
+** JTextPane:  Chat Window
+
+* DONE create Account database 
+** use chatserver
+chatter, xXxXxXxXxXx
+** create the table
+CREATE TABLE account (
+id INT NOT NULL AUTO_INCREMENT, 
+PRIMARY KEY(id),
+name VARCHAR(32), 
+password varchar(32)
+);
+** insert new account
+mysql> insert into account (name,password) values ('sherman',SHA1('itsmybirthday');
+
+
+
