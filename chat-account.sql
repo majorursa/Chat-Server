@@ -4,8 +4,8 @@ CREATE TABLE account (
        name VARCHAR(32), 
        password varchar(32)
 );
-insert into account (name, password) values ('tom',SHA1('tom11'));
-insert into account (name, password) values ('david',SHA1('david22'));
-insert into account (name, password) values ('beth',SHA1('beth33'));
-insert into account (name, password) values ('john',SHA1('john44'));
+insert into account (name, password) values ('tom','tom11');
+insert into account (name, password) values ('david','david22');
+insert into account (name, password) values ('beth','beth33');
+insert into account (name, password) values ('john','john44');
 
