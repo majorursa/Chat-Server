@@ -2,6 +2,13 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+/**
+ * MessageDaemon
+ * 
+ * Holds the messages object which holds all of the public messages
+ * Holds the chats object which holds all of the ChatConnections objects
+ *
+ */
 public class MessageDaemon extends Thread {
     public ArrayList<String> messages;
     public ArrayList<ChatConnection> chats;
@@ -41,6 +48,19 @@ public class MessageDaemon extends Thread {
         return messages.get(mid-1);
     }
 
+    // Check if user already logged in
+    public boolean checkLoggedIn(String name) {
+        String cname = "";
+        for(ChatConnection cc : chats) {
+            cname = cc.getClientName();
+            if(name.equals(cname)) {
+                return true;
+            } 
+        }
+        return false;
+    }
+
+    // Add a message from <from> into <to>'s private message queue.
     public void privateMsg (String msg, String from, String to) {
         String cname = "";
         for(ChatConnection cc : chats) {
