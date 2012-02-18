@@ -3,21 +3,21 @@ import java.util.*;
 
 public class DBConnection {
     Connection conn = null;
-    String userName;
-    String password;
+    String dbUsername;
+    String dbPassword;
     String url;
     HashMap<String,String> logins;
 
     public DBConnection (String user, String pass) {
         try {
-            //String userName = "chatter";
-            //String password = "xXxXxXxXxXx";
-            userName = user;
-            password = pass;
+            //String dbUsername = "chatter";
+            //String dbPassword = "xXxXxXxXxXx";
+            dbUsername = user;
+            dbPassword = pass;
             logins = new HashMap<String,String>();
             url = "jdbc:mysql://173.230.154.132/chatserver";
             Class.forName ("com.mysql.jdbc.Driver").newInstance ();
-            conn = DriverManager.getConnection (url, userName, password);
+            conn = DriverManager.getConnection (url, dbUsername, dbPassword);
             System.out.println ("Database connection established");
         } catch (Exception e) {
             System.err.println ("Cannot connect to database server");
@@ -32,6 +32,7 @@ public class DBConnection {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        conn = null;
 
         // finally
         //     {
@@ -76,29 +77,12 @@ public class DBConnection {
         int idVal;
         String nameVal = "";
         String passVal = "";
-        
-        try {
-            
-            Statement s = conn.createStatement ();
-            //String query = "Select id,name,password from account where name='" + username + "' and password=SHA1'" + password + "')";
-            String query = "Select id,name,password from account where name='" + username + "' and password='" + password + "'";
-            s.executeQuery(query);
-            ResultSet rs = s.getResultSet ();
-            while (rs.next ()) {
-                idVal = rs.getInt ("id");
-                nameVal = rs.getString ("name");
-                passVal = rs.getString ("password");
-                if(username.equals(nameVal) ) {
-                    System.out.println("account exists");
-                    return true;
-                }
-            }
-            rs.close ();
-            s.close ();
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
+        passVal=logins.get(username);
+        if(passVal != null && passVal.equals(password)) {
+            return true;
         }
         return false;
+                
     }
     public boolean registerUser(String username, String password) {
         // check to see if username is already being used.
@@ -106,49 +90,43 @@ public class DBConnection {
                 return false;
         }
 
-        // if connection has died, re-establish it.
-        if(conn == null) {
-            try {
-                conn = DriverManager.getConnection (url, userName, password);
-                System.out.println ("Database connection re-established");
-            } catch (SQLException sqle) {
-                sqle.printStackTrace();
-            }
-        }
-
         try {
-           Statement s = conn.createStatement ();
-           String query = "Select id,name,password from account where name='" + username + "'";
-           s.executeQuery(query);
-           ResultSet rs = s.getResultSet ();
-           while (rs.next ()) {
-               // Return false if username is already in account db. 
-               return false;
-           }
-           rs.close ();
-           s.close ();
+            //System.out.println("url: "+url + " username: " + dbUsername + " pass: " + dbPassword);
+            //Class.forName ("com.mysql.jdbc.Driver").newInstance ();
 
-           // Since user doesn't already exist, add user to logins
-           logins.put(username,password);
-           // Got this far account with that name doesn't exist
+            // Re-establish Database Connection
+            conn = DriverManager.getConnection (url, dbUsername, dbPassword);
+            System.out.println ("Database connection re-established");
 
-           // insert new account with username, password
-           s = conn.createStatement ();
-           //query = "insert into account (name,password) values('" + username + "',SHA1('" + password + "'))";
-           query = "insert into account (name,password) values('" + username + "','" + password + "')";
-           System.out.println(query);
-           s.executeUpdate(query);
-           // ResultSet rs = s.getResultSet ();
-           // while (rs.next ()) {
-           //     return false;
-           // }
-           // rs.close ();
-           s.close ();
-           return true;
+            Statement s = conn.createStatement ();
+            String query = "Select id,name,password from account where name='" + username + "'";
+            s.executeQuery(query);
+            ResultSet rs = s.getResultSet ();
+            while (rs.next ()) {
+                // Return false if username is already in account db. 
+                return false;
+            }
+            rs.close ();
+            s.close ();
+
+            // Since user doesn't already exist, add user to logins
+            logins.put(username,password);
+            // Got this far account with that name doesn't exist
+
+            // insert new account with username, password
+            s = conn.createStatement ();
+            //query = "insert into account (name,password) values('" + username + "',SHA1('" + password + "'))";
+            query = "insert into account (name,password) values('" + username + "','" + password + "')";
+            //System.out.println(query);
+            s.executeUpdate(query);
+            s.close ();
+            conn.close();
+            conn = null;
+            return true;
            
         } catch (SQLException sqle) {
             sqle.printStackTrace();
-        }
+        } 
         return true;
 
     }
