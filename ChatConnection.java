@@ -8,6 +8,7 @@ import java.util.*;
  * Holds the clients private messages queue
  */
 public class ChatConnection extends Thread {
+    private static final String WELCOME_FILE = "./welcome.txt";
 
     // Queue of messages
     private Queue<String> privMessages;
@@ -72,6 +73,17 @@ public class ChatConnection extends Thread {
         int bytes;
         int maxbytes=1024;
         
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(WELCOME_FILE));
+            String line = "";
+            while((line = reader.readLine() ) != null) {
+                privMessages.add(line);
+            }
+            reader.close();
+        } catch (IOException ioe) {
+            System.err.println("File not found.");
+        }
+
         do {
             received = "";
             try {
@@ -160,6 +172,7 @@ public class ChatConnection extends Thread {
                     if(receiver.equals("all")) {
                         sendMsg(inStr);
                     } else {
+                        addPrivMsg(receiver + " (from you): " + inStr);
                         md.privateMsg(inStr, name, receiver);
                     }
                 } else {
