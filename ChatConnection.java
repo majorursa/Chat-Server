@@ -2,11 +2,12 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+/**
+ * ChatConnection represents a client's individual connection to the Chat Server
+ *
+ * Holds the clients private messages queue
+ */
 public class ChatConnection extends Thread {
-    // type of message from client
-    public enum MsgType {
-        SEND, SENDALL, WHO, LOGIN, LOGOUT;
-    }
 
     // Queue of messages
     private Queue<String> privMessages;
@@ -45,12 +46,15 @@ public class ChatConnection extends Thread {
 
     // grab input and output streams from Socket
     public ChatConnection(Socket s, int id, MessageDaemon m, DBConnection dbc) {
+        // privMessages is a queue that stores a user's private messages.
         privMessages = new LinkedList<String>();
+        // a reference to the MessageDaemon, used for communicating between clients
         md = m;
         // set the current message for this client to the current size of the messages 
         //  so client only gets messages sent, since they logged in.
         currentMsg = md.getMessagesSize();
         exiting = false;
+        // a reference to the Database Connection object.
         db = dbc;
         client = s;
         
@@ -119,14 +123,19 @@ public class ChatConnection extends Thread {
         int space;
         String cmd;
         String receiver = "";
-        
+        // need to refactor code to use args, instead of reusing inStr
+        String args = "";
+
         // is this a 1 word command?
         space = inStr.indexOf(' ');
         if(space > 0) {
+            // this is a command with arguments
             cmd = inStr.substring(0,space);
             inStr = inStr.substring(space+1);
         } else { 
+            // this is a command without arguments
             cmd = inStr;
+            inStr = "";
         }
 
         cmd = cmd.toUpperCase();
@@ -134,6 +143,7 @@ public class ChatConnection extends Thread {
         // Send a message to login, if not logged in
         if (loggedIn == false && !cmd.equals("LOGIN") && !cmd.equals("REGISTER")) {
             privMessages.add("Please Login first.");
+            // DEBUG
             System.out.println("command is: " + cmd);
         } else {
             //System.out.println("logged in status: " + loggedIn);
@@ -200,6 +210,8 @@ public class ChatConnection extends Thread {
     }
 
     // Add message to the Chat Connection's private message Queue.
+    // TODO this should be synchronized, both MessageDaemon and ChatConnection
+    //   are updating the privMessages queue.
     public void addPrivMsg(String inStr) {
         privMessages.add(inStr);
     }
@@ -219,6 +231,7 @@ public class ChatConnection extends Thread {
 
     public void checkAllMessages() {
         // check if there is a new message
+        // TODO Change to while and test.
         if(md.getMessagesSize() > currentMsg ) {
             currentMsg++;
             System.out.println("checking message #" + currentMsg);
@@ -235,26 +248,43 @@ public class ChatConnection extends Thread {
             privMessages.add("Please choose another name or log in with old account.");
         }
     }
-    // who
+    // Get a List of people in the chat room.
     public void callWho() {
         String whoList = md.who();
         output.println(whoList);
     }
 
-
+    // Log in to the Chat Room.
     public void login(String inStr) {
         // message: login username password
+        if(inStr.length() < 1) {
+            privMessages.add("Please provide a login name and password.");
+            return;
+        }
         StringTokenizer st = new StringTokenizer(inStr);
         // drop command, actually that's already chopped off
         // st.nextToken();
         String inName = st.nextToken();
+        if(!st.hasMoreElements()) {
+            privMessages.add("Please provide login name and password.");
+            return;
+        }
         String inPassword = st.nextToken();
+        // TODO: check if already logged in!
+        if(md.checkLoggedIn(inName)) {
+           privMessages.add("Someone is already logged in with that account.");
+           return;
+        }
+
+        // check that password is correct
         if(db.checkPassword(inName,inPassword)) {
             name = inName;
+            privMessages.add("Login successful.");
             System.out.println(name + " has successfully logged in.");
             md.addMsg(name + " has logged in.");
             loggedIn = true;
         } else {
+            privMessages.add("Login failed: please try again or you'll be reported to the Authoritay.");
             System.out.println(inName + " failed to log in with password: " + inPassword);
         }
     }
@@ -263,5 +293,6 @@ public class ChatConnection extends Thread {
     public boolean checkPassword(String name, String pass) {
         return true;
     }
+
 }
 

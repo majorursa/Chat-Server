@@ -14,6 +14,13 @@ public class ChatServer {
         clients = 0;
         String dbuser = "chatter";
         String dbpass = "xXxXxXxXxXx";
+
+        //Use command line arguments for database connection.
+        if(args.length > 1) {
+          dbuser = args[0];
+          dbpass = args[1];
+        }
+        
         db = new DBConnection(dbuser,dbpass);
         try {
             serverSocket = new ServerSocket(PORT);
