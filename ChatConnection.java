@@ -172,7 +172,7 @@ public class ChatConnection extends Thread {
                     if(receiver.equals("all")) {
                         sendMsg(inStr);
                     } else {
-                        addPrivMsg(receiver + " (from you): " + inStr);
+                        addPrivMsg(name + " (to " + receiver + "): " + inStr);
                         md.privateMsg(inStr, name, receiver);
                     }
                 } else {
@@ -223,9 +223,9 @@ public class ChatConnection extends Thread {
     }
 
     // Add message to the Chat Connection's private message Queue.
-    // TODO this should be synchronized, both MessageDaemon and ChatConnection
+    // DONE this should be synchronized, both MessageDaemon and ChatConnection
     //   are updating the privMessages queue.
-    public void addPrivMsg(String inStr) {
+    public synchronized void addPrivMsg(String inStr) {
         privMessages.add(inStr);
     }
 
