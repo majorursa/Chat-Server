@@ -19,9 +19,8 @@ public class ChatClient extends JPanel implements ActionListener {
     public ChatClient() {
         super(new GridBagLayout());
 
-        System.out.println("size of queue: " + outMsg.size());        
         // Add a label 
-        JLabel label = new JLabel("Welcome to Ursa Major Chatroom, Cadet!");
+        JLabel label = new JLabel("Ursa Major Chatroom");
 
         textArea = new JTextArea(10,40);
         textArea.setEditable(false);
@@ -40,6 +39,11 @@ public class ChatClient extends JPanel implements ActionListener {
                     }
                 }
             });
+
+        JLabel clabel = new JLabel("chat:");
+        JPanel cpanel = new JPanel();
+        cpanel.add(clabel);
+        cpanel.add(textField);
         
         //Add Components to this panel.
         GridBagConstraints c = new GridBagConstraints();
@@ -60,7 +64,8 @@ public class ChatClient extends JPanel implements ActionListener {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.ipady=4;
         c.ipadx=2;
-        add(textField, c);
+        //add(textField, c);
+        add(cpanel, c);
 
     }
     
@@ -104,10 +109,9 @@ public class ChatClient extends JPanel implements ActionListener {
             try {
                 //brin = new BufferedReader(new InputStreamReader(System.in));
                 outMsg = outQ;
-                clientSocket = new Socket("localhost", 1337);
+                clientSocket = new Socket(host, port);
                 
                 outToServer = new PrintWriter(clientSocket.getOutputStream(), true);
-                //outToServer.println("login bossy wwwwru");
                 inputStream = clientSocket.getInputStream();
                 System.out.println("Connected");
             } catch (Exception e) {
