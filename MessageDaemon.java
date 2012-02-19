@@ -4,7 +4,7 @@ import java.util.*;
 
 /**
  * MessageDaemon
- * 
+ *
  * Holds the messages object which holds all of the public messages
  * Holds the chats object which holds all of the ChatConnections objects
  *
@@ -55,7 +55,7 @@ public class MessageDaemon extends Thread {
             cname = cc.getClientName();
             if(name.equals(cname)) {
                 return true;
-            } 
+            }
         }
         return false;
     }

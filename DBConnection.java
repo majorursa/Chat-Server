@@ -26,6 +26,7 @@ public class DBConnection {
         // Set up the logins
         setUpLogins();
 
+        // close the database connection
         try {
             conn.close();
             System.out.println("Database connection terminated.");
@@ -34,18 +35,6 @@ public class DBConnection {
         }
         conn = null;
 
-        // finally
-        //     {
-        //         if (conn != null)
-        //             {
-        //                 try
-        //                     {
-        //                         conn.close ();
-        //                         System.out.println ("Database connection terminated");
-        //                     }
-        //                 catch (Exception e) { /* ignore close errors */ }
-        //             }
-        //     }
     }
     
     /**
