@@ -21,6 +21,7 @@ public class ChatServer {
           dbpass = args[1];
         }
         
+        // Connection with account Table in chatserver Database
         db = new DBConnection(dbuser,dbpass);
         try {
             serverSocket = new ServerSocket(PORT);
@@ -36,9 +37,15 @@ public class ChatServer {
             // Wait for clients.
             Socket client = serverSocket.accept();
             clients++;
-            System.out.println("\nAccepted a new client, id: "+ clients + ", remote port:" + client.getPort() + ", local port: " + client.getLocalPort() + "\n");
+            System.out.println("\nAccepted a new client, id: " + clients +
+                             ", remote port:" + client.getPort() + ", local port: " 
+                             + client.getLocalPort() + "\n");
+            // Pass the client socket, clientid, 
+            // also pass refs to MessageDaemon and DBConnection to contructor.
             ChatConnection chatc = new ChatConnection(client, clients, md, db);
+            // Start Chat Connection thread
             chatc.start();
+            // Add the Chat Connection to the MessageDaemon
             md.addChat(chatc);
         } while (true);
     }
