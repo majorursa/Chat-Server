@@ -8,16 +8,13 @@ public class DBConnection {
     String url;
     HashMap<String,String> logins;
 
-    public DBConnection (String user, String pass) {
+    public DBConnection () {
         try {
-            //String dbUsername = "chatter";
-            //String dbPassword = "xXxXxXxXxXx";
-            dbUsername = user;
-            dbPassword = pass;
             logins = new HashMap<String,String>();
-            url = "jdbc:mysql://173.230.154.132/chatserver";
-            Class.forName ("com.mysql.jdbc.Driver").newInstance ();
-            conn = DriverManager.getConnection (url, dbUsername, dbPassword);
+            url = "jdbc:sqlite:chataccount.db";
+
+            Class.forName("org.sqlite.JDBC");
+            conn = DriverManager.getConnection("jdbc:sqlite:chataccount.db");
             System.out.println ("Database connection established");
         } catch (Exception e) {
             System.err.println ("Cannot connect to database server");
@@ -26,14 +23,7 @@ public class DBConnection {
         // Set up the logins
         setUpLogins();
 
-        // close the database connection
-        try {
-            conn.close();
-            System.out.println("Database connection terminated.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        conn = null;
+
 
     }
     
@@ -47,8 +37,8 @@ public class DBConnection {
         try {
             Statement s = conn.createStatement();
             String query = "Select name,password from account";
-            s.executeQuery(query);
-            ResultSet rs = s.getResultSet();
+            ResultSet rs = s.executeQuery(query);
+
             while(rs.next() ) {
                nameVal = rs.getString ("name");
                passVal = rs.getString ("password");
@@ -80,17 +70,9 @@ public class DBConnection {
         }
 
         try {
-            //System.out.println("url: "+url + " username: " + dbUsername + " pass: " + dbPassword);
-            //Class.forName ("com.mysql.jdbc.Driver").newInstance ();
-
-            // Re-establish Database Connection
-            conn = DriverManager.getConnection (url, dbUsername, dbPassword);
-            System.out.println ("Database connection re-established");
-
             Statement s = conn.createStatement ();
             String query = "Select id,name,password from account where name='" + username + "'";
-            s.executeQuery(query);
-            ResultSet rs = s.getResultSet ();
+            ResultSet rs = s.executeQuery(query);
             while (rs.next ()) {
                 // Return false if username is already in account db. 
                 return false;
@@ -104,13 +86,12 @@ public class DBConnection {
 
             // insert new account with username, password
             s = conn.createStatement ();
-            //query = "insert into account (name,password) values('" + username + "',SHA1('" + password + "'))";
-            query = "insert into account (name,password) values('" + username + "','" + password + "')";
+            query = "insert into account values ($next_id, '" + username + "','" + password + "');";
             //System.out.println(query);
             s.executeUpdate(query);
             s.close ();
-            conn.close();
-            conn = null;
+            //conn.close();
+            //conn = null;
             return true;
            
         } catch (SQLException sqle) {

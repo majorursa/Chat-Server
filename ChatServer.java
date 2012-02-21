@@ -12,17 +12,9 @@ public class ChatServer {
 
     public static void main(String[] args) throws IOException {
         clients = 0;
-        String dbuser = "chatter";
-        String dbpass = "xXxXxXxXxXx";
-
-        //Use command line arguments for database connection.
-        if(args.length > 1) {
-          dbuser = args[0];
-          dbpass = args[1];
-        }
-        
         // Connection with account Table in chatserver Database
-        db = new DBConnection(dbuser,dbpass);
+        // now using sqlite, so no need for dbuser and dbuser password
+        db = new DBConnection();
         try {
             serverSocket = new ServerSocket(PORT);
         } catch (IOException ioe) {
