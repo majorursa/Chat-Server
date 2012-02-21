@@ -1,0 +1,9 @@
+* Simple Chat Server and chat clients written in java and one for emacs.
+
+** Available commands
++ register username password
++ login username password
++ send all message
++ send username message (private message)
++ who
++ logout
