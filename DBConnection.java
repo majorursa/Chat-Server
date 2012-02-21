@@ -1,13 +1,25 @@
 import java.sql.*;
 import java.util.*;
 
+/** 
+ * DBConnection
+ * encapsulates the database and also the account authentication and registration.
+ *
+ * Currently using a sqlite database for disk storage.
+ * At ChatServer start up, all of the accounts are read from db into a HashMap
+ *
+ * When a new user is registered the new username/pass are stored into the db 
+ *   immediately.
+ */ 
 public class DBConnection {
     Connection conn = null;
-    String dbUsername;
-    String dbPassword;
     String url;
     HashMap<String,String> logins;
 
+    /** 
+     * Constructor
+     * Opens a connection to the database and calls setUpLogins().
+     */
     public DBConnection () {
         try {
             logins = new HashMap<String,String>();
@@ -19,17 +31,12 @@ public class DBConnection {
         } catch (Exception e) {
             System.err.println ("Cannot connect to database server");
         }
-        
         // Set up the logins
         setUpLogins();
-
-
-
     }
     
     /**
-     * Populates the logins hashmap with reistered users
-     *
+     * Reads in accounts stored in db and populates the logins hashmap with them.
      */
     public void setUpLogins() {
         String nameVal = "";
@@ -38,7 +45,6 @@ public class DBConnection {
             Statement s = conn.createStatement();
             String query = "Select name,password from account";
             ResultSet rs = s.executeQuery(query);
-
             while(rs.next() ) {
                nameVal = rs.getString ("name");
                passVal = rs.getString ("password");
@@ -52,6 +58,9 @@ public class DBConnection {
     }
 
 
+    /** 
+     * Checks the username's password.
+     */
     public boolean checkPassword (String username, String password) {
         int idVal;
         String nameVal = "";
@@ -63,6 +72,13 @@ public class DBConnection {
         return false;
                 
     }
+    
+    /** 
+     * Registers the user.
+     *
+     * Checks that the username doesn't already exist, if it does: return false.
+     * If username is new, registers accout, saves in db immediately and returns true.
+     */
     public boolean registerUser(String username, String password) {
         // check to see if username is already being used.
         if(logins.containsKey(username)) {
